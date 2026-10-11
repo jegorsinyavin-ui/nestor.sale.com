@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nestor.sale — доска объявлений</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    background: #f4f6fb;
+    color: #1c2331;
+    line-height: 1.5;
+  }
+  /* ---------- HEADER ---------- */
+  header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,.15);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .logo-mark {
+    position: relative;
+    width: 52px; height: 52px;
+    background: #ffd54a;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 900;
+    color: #1e3c72;
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    transition: transform .2s;
+  }
+  .logo-mark:hover { transform: scale(1.05) rotate(-3deg); }
+  /* усы */
+  .logo-mark::before, .logo-mark::after {
+    content: "";
+    position: absolute;
+    bottom: 12px;
+    width: 16px; height: 4px;
+    background: #1e3c72;
+    border-radius: 4px;
+  }
+  .logo-mark::before { left: -4px; transform: rotate(-18deg); }
+  .logo-mark::after  { right: -4px; transform: rotate(18deg); }
+  .logo-text { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+  .logo-text span { color: #ffd54a; }
+
+  .search {
+    flex: 1; min-width: 220px;
+    display: flex;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  }
+  .search input {
+    flex: 1; border: none; padding: 12px 16px; font-size: 15px; outline: none;
+  }
+  .search button {
+    border: none; background: #ffd54a; color: #1e3c72;
+    padding: 0 22px; font-weight: 700; cursor: pointer; font-size: 15px;
+    transition: background .2s;
+  }
+  .search button:hover { background: #ffc107; }
+
+  .header-actions { display: flex; gap: 10px; }
+  .btn {
+    border: none; cursor: pointer; border-radius: 10px;
+    padding: 10px 18px; font-weight: 600; font-size: 14px;
+    transition: all .2s;
+  }
+  .btn-primary { background: #ffd54a; color: #1e3c72; }
+  .btn-primary:hover { background: #ffc107; transform: translateY(-1px); }
+  .btn-ghost {
+    background: rgba(255,255,255,.15); color: #fff;
+    border: 1px solid rgba(255,255,255,.4);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,.28); }
+
+  /* ---------- LAYOUT ---------- */
+  .container { max-width: 1200px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* ---------- CATEGORIES ---------- */
+  .categories {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 26px;
+  }
+  .cat {
+    background: #fff; border: 1px solid #e2e7f1;
+    padding: 9px 18px; border-radius: 22px; cursor: pointer;
+    font-size: 14px; font-weight: 600; color: #2a5298;
+    transition: all .2s;
+  }
+  .cat:hover { border-color: #2a5298; transform: translateY(-2px); }
+  .cat.active { background: #2a5298; color: #fff; border-color: #2a5298; }
+
+  /* ---------- GRID ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 22px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(30,60,114,.08);
+    transition: transform .25s, box-shadow .25s;
+    display: flex; flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 32px rgba(30,60,114,.18);
+  }
+  .card-img {
+    height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 60px;
+    background: linear-gradient(135deg,#eef2fb,#dde5f7);
+  }
+  .card-body { padding: 16px; display: flex; flex-direction: column; flex: 1; gap: 8px; }
+  .card-title { font-size: 16px; font-weight: 700; color: #1c2331; }
+  .card-price { font-size: 20px; font-weight: 800; color: #2a5298; }
+  .card-loc { font-size: 13px; color: #7a8499; }
+  .card-btn {
+    margin-top: auto;
+    background: #2a5298; color: #fff; border: none;
+    padding: 10px; border-radius: 10px; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+  }
+  .card-btn:hover { background: #1e3c72; }
+
+  /* ---------- EMPTY STATE ---------- */
+  .empty {
+    display: none;
+    background: #fff; border-radius: 18px; padding: 40px 28px;
+    text-align: center; box-shadow: 0 8px 26px rgba(30,60,114,.1);
+    margin-top: 10px;
+  }
+  .empty.show { display: block; }
+  .empty h2 { font-size: 22px; margin-bottom: 12px; color: #1e3c72; }
+  .empty p { color: #556; margin-bottom: 20px; }
+  .empty .links {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  .avito-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #00aaff; color: #fff; text-decoration: none;
+    padding: 12px 22px; border-radius: 12px; font-weight: 700;
+    transition: background .2s;
+  }
+  .avito-link:hover { background: #0088cc; }
+  .donate-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #21a038; color: #fff; text-decoration: none;
+    padding: 12px 22px; border-radius: 12px; font-weight: 700;
+    transition: background .2s;
+  }
+  .donate-link:hover { background: #188a2e; }
+
+  /* ---------- DONATE FAB ---------- */
+  .donate-fab {
+    position: fixed; right: 24px; bottom: 24px;
+    background: linear-gradient(135deg,#21a038,#188a2e);
+    color: #fff; border: none;
+    padding: 14px 22px; border-radius: 50px;
+    font-size: 15px; font-weight: 700;
+    box-shadow: 0 10px 24px rgba(33,160,56,.4);
+    cursor: pointer; transition: transform .2s;
+    z-index: 60;
+  }
+  .donate-fab:hover { transform: scale(1.06); }
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,25,50,.6);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 20px;
+    max-width: 440px; width: 100%;
+    padding: 30px 28px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    animation: pop .25s ease;
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .modal h3 { font-size: 22px; margin-bottom: 10px; color: #1e3c72; }
+  .modal p { color: #556; margin-bottom: 16px; font-size: 14px; }
+  .modal .phone-box {
+    background: #eef2fb;
+    border: 2px dashed #2a5298;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    font-size: 20px; font-weight: 800; color: #1e3c72;
+    letter-spacing: 1px;
+    margin: 8px 0 16px;
+    user-select: all;
+  }
+  .modal .bank {
+    font-size: 14px; color: #7a8499; text-align: center; margin-bottom: 22px;
+  }
+  .modal .actions {
+    display: flex; gap: 10px; justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .modal .actions button {
+    padding: 10px 20px; border-radius: 10px; border: none;
+    font-weight: 600; cursor: pointer; font-size: 14px;
+  }
+  .modal .copy { background: #2a5298; color: #fff; }
+  .modal .copy:hover { background: #1e3c72; }
+  .modal .close { background: #eef2fb; color: #1c2331; }
+  .modal .close:hover { background: #dde5f7; }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1e3c72; color: #fff; padding: 12px 24px;
+    border-radius: 10px; font-weight: 600; font-size: 14px;
+    opacity: 0; transition: all .3s; z-index: 200;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  @media (max-width: 640px) {
+    header { padding: 14px 16px; }
+    .logo-text { font-size: 18px; }
+    .header-actions { width: 100%; }
+    .header-actions .btn { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== HEADER ========== -->
+<header>
+  <div class="logo" onclick="location.reload()">
+    <div class="logo-mark">Н</div>
+    <div class="logo-text">nestor<span>.sale</span></div>
+  </div>
+
+  <div class="search">
+    <input id="searchInput" type="text" placeholder="Что ищем? Например: iPhone, диван, велосипед...">
+    <button onclick="doSearch()">Найти</button>
+  </div>
+
+  <div class="header-actions">
+    <button class="btn btn-ghost">Войти</button>
+    <button class="btn btn-primary">+ Разместить</button>
+  </div>
+</header>
+
+<!-- ========== MAIN ========== -->
+<div class="container">
+
+  <!-- Категории -->
+  <div class="categories" id="categories">
+    <div class="cat active" data-cat="all">Все</div>
+    <div class="cat" data-cat="electronics">Электроника</div>
+    <div class="cat" data-cat="home">Для дома</div>
+    <div class="cat" data-cat="auto">Авто</div>
+    <div class="cat" data-cat="clothes">Одежда</div>
+    <div class="cat" data-cat="hobby">Хобби</div>
+  </div>
+
+  <!-- Сетка товаров -->
+  <div class="grid" id="grid"></div>
+
+  <!-- Пустое состояние -->
+  <div class="empty" id="empty">
+    <h2>😔 По запросу «<span id="emptyQuery"></span>» ничего не найдено</h2>
+    <p>Попробуйте поискать на Avito — там точно есть! Или поддержите проект донатом.</p>
+    <div class="links">
+      <a class="avito-link" id="avitoLink"
+         href="https://www.avito.ru/all?q=" target="_blank" rel="noopener">
+        🔗 Найти на Avito
+      </a>
+      <a class="donate-link" href="#" onclick="openDonate(event)">
+        💚 Поддержать проект
+      </a>
+    </div>
+    <p style="margin-top:22px;font-size:13px;color:#889;">
+      Продавец может оставить свою ссылку на Avito прямо в объявлении.
+    </p>
+  </div>
+
+</div>
+
+<!-- ========== DONATE FAB ========== -->
+<button class="donate-fab" onclick="openDonate(event)">💚 Донат</button>
+
+<!-- ========== MODAL DONATE ========== -->
+<div class="modal-overlay" id="donateModal">
+  <div class="modal">
+    <h3>💚 Поддержать nestor.sale</h3>
+    <p>Спасибо, что пользуетесь нашей площадкой! Любая сумма поможет развитию проекта.</p>
+    <div class="phone-box" id="phoneNumber">+7 926 937-08-43</div>
+    <div class="bank">Сбербанк • перевод по номеру телефона</div>
+    <div class="actions">
+      <button class="copy" onclick="copyPhone()">📋 Скопировать номер</button>
+      <button class="close" onclick="closeDonate()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast">Номер скопирован!</div>
+
+<script>
+/* ============ ДАННЫЕ ============ */
+const products = [
+  { id:1, title:'iPhone 13 128GB', price:42000, loc:'Москва', emoji:'📱', cat:'electronics',
+    avito:'https://www.avito.ru/all?q=iPhone+13' },
+  { id:2, title:'Диван-уголок IKEA', price:18500, loc:'Санкт-Петербург', emoji:'🛋️', cat:'home',
+    avito:'https://www.avito.ru/all?q=диван+уголок' },
+  { id:3, title:'Велосипед горный Trek', price:27000, loc:'Казань', emoji:'🚲', cat:'hobby',
+    avito:'https://www.avito.ru/all?q=велосипед+Trek' },
+  { id:4, title:'Ноутбук MacBook Air M1', price:65000, loc:'Москва', emoji:'💻', cat:'electronics',
+    avito:'https://www.avito.ru/all?q=MacBook+Air+M1' },
+  { id:5, title:'Куртка зимняя мужская', price:5500, loc:'Новосибирск', emoji:'🧥', cat:'clothes',
+    avito:'https://www.avito.ru/all?q=куртка+зимняя' },
+  { id:6, title:'Кресло офисное Ergo', price:9200, loc:'Екатеринбург', emoji:'💺', cat:'home',
+    avito:'https://www.avito.ru/all?q=кресло+офисное' },
+  { id:7, title:'Кроссовки Nike Air', price:7400, loc:'Москва', emoji:'👟', cat:'clothes',
+    avito:'https://www.avito.ru/all?q=Nike+Air' },
+  { id:8, title:'Гитара акустическая Yamaha', price:15000, loc:'Сочи', emoji:'🎸', cat:'hobby',
+    avito:'https://www.avito.ru/all?q=гитара+Yamaha' },
+];
+
+/* ============ РЕНДЕР ============ */
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+const emptyQuery = document.getElementById('emptyQuery');
+const avitoLink = document.getElementById('avitoLink');
+let currentCat = 'all';
+let currentQuery = '';
+
+function render() {
+  const q = currentQuery.trim().toLowerCase();
+
+  const filtered = products.filter(p => {
+    const matchCat = currentCat === 'all' || p.cat === currentCat;
+    const matchQ = !q || p.title.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  grid.innerHTML = '';
+
+  if (filtered.length === 0 && (q || currentCat !== 'all')) {
+    // нет результатов — показываем блок с Avito
+    emptyQuery.textContent = currentQuery || 'выбранной категории';
+    avitoLink.href = 'https://www.avito.ru/all?q=' + encodeURIComponent(currentQuery || '');
+    empty.classList.add('show');
+    return;
+  }
+
+  empty.classList.remove('show');
+
+  filtered.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-img">${p.emoji}</div>
+      <div class="card-body">
+        <div class="card-title">${p.title}</div>
+        <div class="card-price">${p.price.toLocaleString('ru-RU')} ₽</div>
+        <div class="card-loc">📍 ${p.loc}</div>
+        <button class="card-btn" onclick="openProduct(${p.id})">Подробнее</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ============ ПОИСК ============ */
+function doSearch() {
+  currentQuery = document.getElementById('searchInput').value;
+  render();
+  // если ничего не нашли — сразу ищем на авито
+  const q = currentQuery.trim().toLowerCase();
+  const found = products.some(p => p.title.toLowerCase().includes(q));
+  if (q && !found) {
+    // ничего не делаем — показываем блок с ссылкой
+  } else if (q) {
+    empty.classList.remove('show');
+  }
+}
+
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+/* ============ КАТЕГОРИИ ============ */
+document.querySelectorAll('.cat').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.cat').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    currentCat = el.dataset.cat;
+    render();
+  });
+});
+
+/* ============ ТОВАР — КНОПКА ============ */
+function openProduct(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  // если у продавца есть ссылка на авито — открываем
+  if (p.avito) {
+    window.open(p.avito, '_blank');
+  } else {
+    alert('Товар: ' + p.title + '\nЦена: ' + p.price + ' ₽');
+  }
+}
+
+/* ============ ДОНАТ ============ */
+function openDonate(e) {
+  if (e) e.preventDefault();
+  document.getElementById('donateModal').classList.add('show');
+}
+function closeDonate() {
+  document.getElementById('donateModal').classList.remove('show');
+}
+function copyPhone() {
+  const phone = '+79269370843';
+  navigator.clipboard.writeText(phone).then(showToast).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = phone;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast();
+  });
+}
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// закрытие модалки по клику на фон
+document.getElementById('donateModal').addEventListener('click', e => {
+  if (e.target.id === 'donateModal') closeDonate();
+});
+
+/* ============ СТАРТ ============ */
+render();
+</script>
+</body>
+</html>
